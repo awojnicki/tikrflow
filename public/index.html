@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="sv">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tikrflow</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <div class="brand">
+          <div class="brand-mark">Tf</div>
+          <div>
+            <strong>Tikrflow</strong>
+            <span>Market Signals</span>
+          </div>
+        </div>
+        <div>
+          <h1>Find the market’s flow</h1>
+          <p class="intro">Tikrflow samlar aktielistor, indikatorer och signaler så att du snabbt ser vilka aktier som är värda en närmare titt.</p>
+        </div>
+      </header>
+
+      <section class="table-section">
+        <div class="section-head">
+          <div>
+            <h2>Large Cap aktier</h2>
+            <p class="meta-line" id="summaryText">Laddar marknadsdata...</p>
+          </div>
+          <div class="view-tools">
+            <label class="filter-card">
+              <span class="filter-copy">
+                <strong>Ichimoku signal</strong>
+                <small>Visar aktier där kursen ligger starkt jämfört med trendnivåerna.</small>
+              </span>
+              <span class="toggle">
+                <input id="ichimokuFilter" type="checkbox" />
+              </span>
+            </label>
+            <label class="filter-card">
+              <span class="filter-copy">
+                <strong>Enkel signal</strong>
+                <small>Visar aktier där flera enkla köptecken pekar åt samma håll.</small>
+              </span>
+              <span class="toggle">
+                <input id="simpleSignalFilter" type="checkbox" />
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <colgroup>
+              <col class="col-stock" />
+              <col class="col-open" />
+              <col class="col-close" />
+              <col class="col-volume" />
+            </colgroup>
+            <thead>
+              <tr>
+                <th aria-sort="ascending">
+                  <button class="sort-header active asc" data-sort-key="displaySymbol" type="button">
+                    Aktie
+                    <span aria-hidden="true"></span>
+                  </button>
+                </th>
+                <th aria-sort="none">
+                  <button class="sort-header" data-sort-key="open" type="button">
+                    Öppning
+                    <span aria-hidden="true"></span>
+                  </button>
+                </th>
+                <th aria-sort="none">
+                  <button class="sort-header" data-sort-key="close" type="button">
+                    Stängning
+                    <span aria-hidden="true"></span>
+                  </button>
+                </th>
+                <th aria-sort="none">
+                  <button class="sort-header" data-sort-key="volume" type="button">
+                    Volym
+                    <span aria-hidden="true"></span>
+                  </button>
+                </th>
+              </tr>
+            </thead>
+            <tbody id="stocksBody"></tbody>
+          </table>
+        </div>
+        <div id="emptyState" class="empty" hidden>Inga aktier matchar filtret.</div>
+        <p class="database-note" id="databaseNote"></p>
+      </section>
+    </main>
+
+    <script src="./app.js"></script>
+  </body>
+</html>

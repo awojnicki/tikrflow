@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: tikrflow
+    runtime: python
+    plan: free
+    buildCommand: ""
+    startCommand: "python3 server.py"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.0
