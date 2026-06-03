@@ -35,3 +35,13 @@ För första deployen används den befintliga databasen i `data/market.db`. Kör
 6. Deploya.
 
 Render sätter miljövariabeln `PORT` automatiskt. `server.py` lyssnar på den porten.
+
+## Automatisk datauppdatering
+
+GitHub Actions-workflowen `.github/workflows/update-market-data.yml` kör importen varje vardag kl. `17:00 UTC`, efter Stockholmsbörsens stängning. Workflowen bygger om `data/market.db`, committar ändringen till GitHub och Render deployar sedan den nya databasen automatiskt om auto-deploy är på.
+
+Du kan också starta uppdateringen manuellt i GitHub:
+
+1. Gå till fliken `Actions`.
+2. Välj `Update market data`.
+3. Klicka `Run workflow`.

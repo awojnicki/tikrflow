@@ -404,18 +404,18 @@ def main():
     os.makedirs(DATA_DIR, exist_ok=True)
     os.makedirs(PUBLIC_DIR, exist_ok=True)
 
-    today = dt.date.today()
-    latest_completed = today - dt.timedelta(days=1)
+    fetch_end_date = dt.date.today()
     conn = sqlite3.connect(DB_PATH)
     init_db(conn)
 
     screened = []
     imported_symbols = []
+    screen_dates = []
     skipped = []
 
     for display_symbol, yahoo_symbol, name in STOCKS:
         try:
-            chart = yahoo_chart(yahoo_symbol, EMA_WARMUP_START, latest_completed)
+            chart = yahoo_chart(yahoo_symbol, EMA_WARMUP_START, fetch_end_date)
             history = rows_from_chart(chart)
             stored_history = [row for row in history if dt.date.fromisoformat(row["date"]) >= STORE_START]
             if not stored_history:
@@ -550,6 +550,7 @@ def main():
 
             latest_index = len(history) - 1
             latest = history[latest_index]
+            screen_dates.append(latest["date"])
             imported_symbols.append(yahoo_symbol)
 
             if (
@@ -588,10 +589,11 @@ def main():
 
     conn.commit()
 
+    screen_date = max(screen_dates) if screen_dates else fetch_end_date.isoformat()
     screened.sort(key=lambda row: (row["ema20"] - row["ema50"]) / row["close"], reverse=True)
     metadata = {
         "generatedAt": dt.datetime.now(dt.timezone.utc).isoformat(),
-        "screenDate": latest_completed.isoformat(),
+        "screenDate": screen_date,
         "storeStartDate": STORE_START.isoformat(),
         "emaWarmupStartDate": EMA_WARMUP_START.isoformat(),
         "source": "Yahoo Finance chart endpoint",
@@ -635,7 +637,7 @@ def main():
         row.pop("stockId", None)
 
     print(f"Imported {len(imported_symbols)} instruments into {DB_PATH}")
-    print(f"Screen matched {len(screened)} instruments for {latest_completed.isoformat()}")
+    print(f"Screen matched {len(screened)} instruments for {screen_date}")
     if skipped:
         print(f"Skipped {len(skipped)} instruments")
 
