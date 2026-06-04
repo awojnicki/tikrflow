@@ -144,11 +144,13 @@ def fetch_stoxray_stock_universe():
 
     unique = {}
     for display_symbol, yahoo_symbol, name, segment in stocks:
-        unique[yahoo_symbol] = (display_symbol, yahoo_symbol, name, segment)
+        unique.setdefault(yahoo_symbol, (display_symbol, yahoo_symbol, name, segment))
     return sorted(unique.values(), key=lambda stock: stock[0])
 
 
 def parse_stoxray_row(row):
+    if "color:darkgray" in row:
+        return None
     match = re_search(
         r'<td><a[^>]*>(.*?)</a></td>\s*'
         r'<td><span>(.*?)</span>.*?</td>\s*'

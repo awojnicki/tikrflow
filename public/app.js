@@ -80,9 +80,9 @@ function rowTemplate(stock) {
   return `
     <tr>
       <td>
-        <span class="stock-cell">
+        <a class="stock-cell stock-link" href="./stock.html?symbol=${encodeURIComponent(stock.symbol)}">
           <strong>${escapeHtml(stock.name || stock.displaySymbol)}</strong>
-        </span>
+        </a>
       </td>
       <td><span class="segment-pill">${escapeHtml(stock.segment || "-")}</span></td>
       <td><span class="day-indicator ${day.className}" title="${day.label}" aria-label="${day.label}"></span></td>

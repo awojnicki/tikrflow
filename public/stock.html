@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="sv">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tikrflow | Bolag</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="shell detail-shell">
+      <header class="detail-header">
+        <a class="back-link" href="./">Tillbaka till Hem</a>
+        <div>
+          <p class="eyebrow" id="stockMeta">Laddar bolag...</p>
+          <h1 id="stockName">Bolag</h1>
+          <p class="intro" id="stockDescription">Hämtar aktuell bolagsinformation.</p>
+          <p class="overview-line" id="overviewMetrics"></p>
+        </div>
+        <section class="chart-panel" aria-label="Candlestick-graf senaste tre månaderna">
+          <div class="chart-head">
+            <div>
+              <h2>Senaste tre månaderna</h2>
+              <span id="chartRange"></span>
+            </div>
+          </div>
+          <div class="candle-chart" id="candleChart"></div>
+          <div class="chart-toolbar">
+            <div class="chart-controls" aria-label="Välj grafperiod">
+              <button class="chart-period" data-chart-period="1w" type="button">1 v</button>
+              <button class="chart-period" data-chart-period="1m" type="button">1 mån</button>
+              <button class="chart-period active" data-chart-period="3m" type="button">3 mån</button>
+              <button class="chart-period" data-chart-period="1y" type="button">1 år</button>
+            </div>
+            <div class="indicator-controls" aria-label="Välj tekniska indikatorer">
+              <button class="indicator-option" data-indicator="ema20" type="button">EMA20</button>
+              <button class="indicator-option" data-indicator="ema50" type="button">EMA50</button>
+              <button class="indicator-option" data-indicator="ema200" type="button">EMA200</button>
+              <button class="indicator-option" data-indicator="ichimoku" type="button">Ichimoku</button>
+            </div>
+          </div>
+        </section>
+      </header>
+
+      <section class="detail-grid">
+        <article class="detail-panel">
+          <h2>Fundamentalt</h2>
+          <dl class="metric-list" id="fundamentalMetrics"></dl>
+        </article>
+
+        <article class="detail-panel">
+          <h2>Tekniskt</h2>
+          <dl class="metric-list" id="technicalMetrics"></dl>
+        </article>
+      </section>
+    </main>
+
+    <script src="./stock.js"></script>
+  </body>
+</html>
