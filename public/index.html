@@ -25,10 +25,22 @@
       <section class="table-section">
         <div class="section-head">
           <div>
-            <h2>Large Cap aktier</h2>
+            <h2>Stockholmsbörsens aktier</h2>
             <p class="meta-line" id="summaryText">Laddar marknadsdata...</p>
           </div>
           <div class="view-tools">
+            <div class="list-filter" aria-label="Välj lista">
+              <span class="filter-copy">
+                <strong>Lista</strong>
+                <small>Välj hela marknaden eller bara bolag från en börslista.</small>
+              </span>
+              <div class="segment-control">
+                <button class="segment-option active" data-segment-filter="all" type="button">Alla</button>
+                <button class="segment-option" data-segment-filter="L" type="button">Large</button>
+                <button class="segment-option" data-segment-filter="M" type="button">Mid</button>
+                <button class="segment-option" data-segment-filter="S" type="button">Small</button>
+              </div>
+            </div>
             <label class="filter-card">
               <span class="filter-copy">
                 <strong>Ichimoku signal</strong>
@@ -54,6 +66,8 @@
           <table>
             <colgroup>
               <col class="col-stock" />
+              <col class="col-segment" />
+              <col class="col-day" />
               <col class="col-open" />
               <col class="col-close" />
               <col class="col-volume" />
@@ -61,8 +75,20 @@
             <thead>
               <tr>
                 <th aria-sort="ascending">
-                  <button class="sort-header active asc" data-sort-key="displaySymbol" type="button">
-                    Aktie
+                  <button class="sort-header active asc" data-sort-key="name" type="button">
+                    Bolag
+                    <span aria-hidden="true"></span>
+                  </button>
+                </th>
+                <th aria-sort="none">
+                  <button class="sort-header" data-sort-key="segment" type="button">
+                    Lista
+                    <span aria-hidden="true"></span>
+                  </button>
+                </th>
+                <th aria-sort="none">
+                  <button class="sort-header" data-sort-key="dayChange" type="button">
+                    Dag
                     <span aria-hidden="true"></span>
                   </button>
                 </th>

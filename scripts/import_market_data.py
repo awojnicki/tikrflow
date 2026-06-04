@@ -7,6 +7,7 @@ import sqlite3
 import time
 import urllib.parse
 import urllib.request
+from html import unescape
 
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -98,6 +99,113 @@ STOCKS = [
     ("Wallenstam B", "WALL-B.ST", "Wallenstam AB ser. B"),
     ("Wihlborgs", "WIHL.ST", "Wihlborgs Fastigheter AB"),
 ]
+
+YAHOO_SYMBOL_OVERRIDES = {
+    "ALIV SDB": "ALIV-SDB.ST",
+    "NDA SE": "NDA-SE.ST",
+}
+
+SEGMENT_LABELS = {
+    "L": "Large Cap",
+    "M": "Mid Cap",
+    "S": "Small Cap",
+}
+
+
+def load_stock_universe():
+    stocks = fetch_stoxray_stock_universe()
+    if stocks:
+        return stocks
+    return [(display_symbol, yahoo_symbol, name, "Large Cap") for display_symbol, yahoo_symbol, name in STOCKS]
+
+
+def fetch_stoxray_stock_universe():
+    stocks = []
+    for page in range(1, 20):
+        url = "https://stoxray.com/markets/XSTO" + (f"?page={page}" if page > 1 else "")
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        try:
+            with urllib.request.urlopen(req, timeout=25) as response:
+                html = response.read().decode("utf-8", "ignore")
+        except Exception:
+            return []
+
+        rows = re_findall(r'<tr[^>]*data-rowid="[^"]+"[^>]*>(.*?)</tr>', html)
+        if not rows:
+            break
+
+        for row in rows:
+            parsed = parse_stoxray_row(row)
+            if parsed is not None:
+                stocks.append(parsed)
+
+        if len(rows) < 50:
+            break
+
+    unique = {}
+    for display_symbol, yahoo_symbol, name, segment in stocks:
+        unique[yahoo_symbol] = (display_symbol, yahoo_symbol, name, segment)
+    return sorted(unique.values(), key=lambda stock: stock[0])
+
+
+def parse_stoxray_row(row):
+    match = re_search(
+        r'<td><a[^>]*>(.*?)</a></td>\s*'
+        r'<td><span>(.*?)</span>.*?</td>\s*'
+        r'<td class="r"><span[^>]*>(.*?)</span></td>\s*'
+        r'<td>(.*?)</td>\s*'
+        r'<td class="r">(.*?)</td>',
+        row,
+    )
+    if not match:
+        return None
+    name = strip_html(match.group(1))
+    display_symbol = strip_html(match.group(2))
+    market_cap = parse_number(strip_html(match.group(5)))
+    if not display_symbol or market_cap is None:
+        return None
+    return (display_symbol, yahoo_symbol(display_symbol), name, segment_from_market_cap(market_cap))
+
+
+def re_findall(pattern, text):
+    import re
+
+    return re.findall(pattern, text, flags=re.S)
+
+
+def re_search(pattern, text):
+    import re
+
+    return re.search(pattern, text, flags=re.S)
+
+
+def strip_html(value):
+    import re
+
+    return unescape(re.sub("<.*?>", "", value)).strip()
+
+
+def parse_number(value):
+    if not value or value == "-":
+        return None
+    try:
+        return float(value.replace(",", ""))
+    except ValueError:
+        return None
+
+
+def segment_from_market_cap(market_cap_usd_millions):
+    if market_cap_usd_millions >= 1100:
+        return SEGMENT_LABELS["L"]
+    if market_cap_usd_millions >= 165:
+        return SEGMENT_LABELS["M"]
+    return SEGMENT_LABELS["S"]
+
+
+def yahoo_symbol(display_symbol):
+    if display_symbol in YAHOO_SYMBOL_OVERRIDES:
+        return YAHOO_SYMBOL_OVERRIDES[display_symbol]
+    return f"{display_symbol.replace(' ', '-')}.ST"
 
 
 def yahoo_chart(symbol, start_date, end_date):
@@ -413,7 +521,8 @@ def main():
     screen_dates = []
     skipped = []
 
-    for display_symbol, yahoo_symbol, name in STOCKS:
+    stock_universe = load_stock_universe()
+    for display_symbol, yahoo_symbol, name, segment in stock_universe:
         try:
             chart = yahoo_chart(yahoo_symbol, EMA_WARMUP_START, fetch_end_date)
             history = rows_from_chart(chart)
@@ -426,9 +535,9 @@ def main():
             cur = conn.execute(
                 """
                 INSERT INTO stocks (symbol, display_symbol, name, market, segment, currency)
-                VALUES (?, ?, ?, 'Nasdaq Stockholm', 'Large Cap', ?)
+                VALUES (?, ?, ?, 'Nasdaq Stockholm', ?, ?)
                 """,
-                (yahoo_symbol, display_symbol, name, currency),
+                (yahoo_symbol, display_symbol, name, segment, currency),
             )
             stock_id = cur.lastrowid
             closes = [row["close"] for row in history]
@@ -599,6 +708,7 @@ def main():
         "source": "Yahoo Finance chart endpoint",
         "database": os.path.relpath(DB_PATH, ROOT),
         "importedCount": len(imported_symbols),
+        "universeCount": len(stock_universe),
         "screenedCount": len(screened),
         "skipped": skipped,
     }

@@ -53,6 +53,12 @@ def load_screen():
           s.symbol,
           s.display_symbol AS displaySymbol,
           s.name,
+          CASE s.segment
+            WHEN 'Large Cap' THEN 'L'
+            WHEN 'Mid Cap' THEN 'M'
+            WHEN 'Small Cap' THEN 'S'
+            ELSE SUBSTR(s.segment, 1, 1)
+          END AS segment,
           p.trade_date AS date,
           p.open,
           p.close,

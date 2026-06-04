@@ -1,9 +1,10 @@
 const state = {
   stocks: [],
   metadata: {},
+  segmentFilter: "all",
   showIchimokuOnly: false,
   showSimpleSignalOnly: false,
-  sortKey: "displaySymbol",
+  sortKey: "name",
   sortDirection: "asc",
 };
 
@@ -24,6 +25,7 @@ const nodes = {
   simpleSignalFilter: document.querySelector("#simpleSignalFilter"),
   summaryText: document.querySelector("#summaryText"),
   databaseNote: document.querySelector("#databaseNote"),
+  segmentOptions: [...document.querySelectorAll(".segment-option")],
   sortHeaders: [...document.querySelectorAll(".sort-header")],
 };
 
@@ -40,6 +42,7 @@ async function loadData() {
 
 function render() {
   const filtered = state.stocks
+    .filter((stock) => state.segmentFilter === "all" || stock.segment === state.segmentFilter)
     .filter((stock) => !state.showIchimokuOnly || Number(stock.ichimokuMatch) === 1)
     .filter((stock) => !state.showSimpleSignalOnly || Number(stock.simpleSignalMatch) === 1)
     .sort(compareStocks);
@@ -51,31 +54,38 @@ function render() {
     `Ichimoku ${ichimokuCount}`,
     `Enkel signal ${simpleSignalCount}`,
   ].join(" · ");
-  nodes.databaseNote.textContent = `Data från ${state.metadata.storeStartDate || "-"}, uppdaterad ${
-    state.metadata.screenDate || "-"
-  }`;
+  nodes.databaseNote.textContent = `Uppdaterad ${formatDateTime(state.metadata.generatedAt)}`;
 
   nodes.body.innerHTML = filtered.map(rowTemplate).join("");
   nodes.empty.hidden = filtered.length > 0;
+  updateSegmentFilter();
   updateSortHeaders();
 }
 
 function compareStocks(a, b) {
   const direction = state.sortDirection === "asc" ? 1 : -1;
-  if (state.sortKey === "displaySymbol") {
-    return a.displaySymbol.localeCompare(b.displaySymbol, "sv-SE") * direction;
+  if (state.sortKey === "displaySymbol" || state.sortKey === "name" || state.sortKey === "segment") {
+    return (
+      String(a[state.sortKey] || "").localeCompare(String(b[state.sortKey] || ""), "sv-SE") * direction
+    );
+  }
+  if (state.sortKey === "dayChange") {
+    return (dayChange(a) - dayChange(b)) * direction;
   }
   return (Number(a[state.sortKey]) - Number(b[state.sortKey])) * direction;
 }
 
 function rowTemplate(stock) {
+  const day = dayDirection(stock);
   return `
     <tr>
       <td>
         <span class="stock-cell">
-          <strong>${escapeHtml(stock.displaySymbol)}</strong>
+          <strong>${escapeHtml(stock.name || stock.displaySymbol)}</strong>
         </span>
       </td>
+      <td><span class="segment-pill">${escapeHtml(stock.segment || "-")}</span></td>
+      <td><span class="day-indicator ${day.className}" title="${day.label}" aria-label="${day.label}"></span></td>
       <td>${price(stock.open)}</td>
       <td>${price(stock.close)}</td>
       <td>${volumeFormatter.format(stock.volume)}</td>
@@ -87,6 +97,21 @@ function price(value) {
   return formatter.format(value);
 }
 
+function dayChange(stock) {
+  const open = Number(stock.open);
+  const close = Number(stock.close);
+  if (close > open) return 1;
+  if (close < open) return -1;
+  return 0;
+}
+
+function dayDirection(stock) {
+  const change = dayChange(stock);
+  if (change > 0) return { className: "up", label: "Upp för dagen" };
+  if (change < 0) return { className: "down", label: "Ner för dagen" };
+  return { className: "flat", label: "Oförändrad för dagen" };
+}
+
 function formatDate(value) {
   if (!value) return "-";
   return new Intl.DateTimeFormat("sv-SE", {
@@ -94,6 +119,17 @@ function formatDate(value) {
     month: "short",
     day: "numeric",
   }).format(new Date(`${value}T12:00:00`));
+}
+
+function formatDateTime(value) {
+  if (!value) return "-";
+  return new Intl.DateTimeFormat("sv-SE", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(value));
 }
 
 function escapeHtml(value) {
@@ -113,6 +149,13 @@ nodes.ichimokuFilter.addEventListener("change", (event) => {
 nodes.simpleSignalFilter.addEventListener("change", (event) => {
   state.showSimpleSignalOnly = event.target.checked;
   render();
+});
+
+nodes.segmentOptions.forEach((button) => {
+  button.addEventListener("click", () => {
+    state.segmentFilter = button.dataset.segmentFilter || "all";
+    render();
+  });
 });
 
 nodes.sortHeaders.forEach((button) => {
@@ -140,6 +183,14 @@ function updateSortHeaders() {
       "aria-sort",
       direction === "asc" ? "ascending" : direction === "desc" ? "descending" : "none",
     );
+  });
+}
+
+function updateSegmentFilter() {
+  nodes.segmentOptions.forEach((button) => {
+    const isActive = button.dataset.segmentFilter === state.segmentFilter;
+    button.classList.toggle("active", isActive);
+    button.setAttribute("aria-pressed", String(isActive));
   });
 }
 
